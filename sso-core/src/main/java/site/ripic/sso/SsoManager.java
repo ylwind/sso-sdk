@@ -8,6 +8,7 @@ import site.ripic.sso.storage.DefaultTemporaryStorage;
 import site.ripic.sso.storage.DefaultTokenStorage;
 import site.ripic.sso.storage.TemporaryStorage;
 import site.ripic.sso.storage.TokenStorage;
+import site.ripic.sso.strategy.AnnoStrategy;
 import site.ripic.sso.strategy.LogicStrategy;
 import site.ripic.sso.strategy.SsoStrategy;
 import site.ripic.sso.token.DefaultTokenService;
@@ -40,6 +41,8 @@ public class SsoManager {
     private volatile static TokenService tokenService;
 
     private volatile static LogicStrategy logicStrategy;
+
+    private volatile static AnnoStrategy annoStrategy;
 
     private SsoManager() {
     }
@@ -145,4 +148,18 @@ public class SsoManager {
         SsoManager.logicStrategy = logicStrategy;
     }
 
+    public static AnnoStrategy getAnnoStrategy() {
+        if (annoStrategy == null) {
+            synchronized (SsoManager.class) {
+                if (annoStrategy == null) {
+                    annoStrategy = new AnnoStrategy();
+                }
+            }
+        }
+        return annoStrategy;
+    }
+
+    public static void setAnnoStrategy(AnnoStrategy annoStrategy) {
+        SsoManager.annoStrategy = annoStrategy;
+    }
 }

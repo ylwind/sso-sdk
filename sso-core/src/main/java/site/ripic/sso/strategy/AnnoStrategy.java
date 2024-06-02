@@ -10,11 +10,11 @@ import site.ripic.sso.annotation.CheckRole;
  */
 public class AnnoStrategy {
 
-    public boolean checkLogin(CheckLogin cl) {
+    public boolean check(CheckLogin cl) {
         return SsoManager.getLogicStrategy().isLogin();
     }
 
-    public boolean checkRole(CheckRole cr) {
+    public boolean check(CheckRole cr) {
         if (cr.role() == null || cr.role().length == 0) {
             return true;
         }
@@ -30,7 +30,7 @@ public class AnnoStrategy {
         }
     }
 
-    public boolean checkPermission(CheckPermission cp) {
+    public boolean check(CheckPermission cp) {
         if (cp.permissions() == null || cp.permissions().length == 0) {
             return true;
         }
