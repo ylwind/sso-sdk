@@ -1,4 +1,4 @@
-package site.ripic.sso.plugin.aop;
+package site.ripic.sso.spring.aop;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -15,7 +15,7 @@ import java.lang.reflect.Method;
 @Aspect
 @Component
 @Order(0)
-public class CheckAspect {
+public class AnnoAspect {
 
     public static final String POINTCUT_SIGN =
             "@within(site.ripic.sso.annotation.CheckLogin) || @annotation(site.ripic.sso.annotation.CheckPermission) ||"
