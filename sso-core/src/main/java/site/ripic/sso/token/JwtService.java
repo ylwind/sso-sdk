@@ -17,11 +17,7 @@ import java.util.Map;
 
 public class JwtService {
 
-    private ECPrivateKey privateKey;
-
-    private ECPublicKey publicKey;
-
-    private Algorithm algorithm;
+    private final Algorithm algorithm;
 
     public JwtService(String publicKey, String privateKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
         byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
@@ -29,9 +25,9 @@ public class JwtService {
         PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
         KeyFactory kf = KeyFactory.getInstance("EC");
-        this.privateKey = (ECPrivateKey) kf.generatePrivate(privateKeySpec);
-        this.publicKey = (ECPublicKey) kf.generatePublic(publicKeySpec);
-        this.algorithm = Algorithm.ECDSA384(this.publicKey, this.privateKey);
+        ECPrivateKey privateKey1 = (ECPrivateKey) kf.generatePrivate(privateKeySpec);
+        ECPublicKey publicKey1 = (ECPublicKey) kf.generatePublic(publicKeySpec);
+        this.algorithm = Algorithm.ECDSA384(publicKey1, privateKey1);
     }
 
     public String createToken(Long userId, Long jwtId, long timeout) {
