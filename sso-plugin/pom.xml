@@ -12,7 +12,6 @@
     <artifactId>sso-plugin</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>spring-aop</module>
     </modules>
 
     <properties>

@@ -6,5 +6,5 @@ import site.ripic.sso.spring.aop.AnnoAspect;
 
 @Configuration
 @Import({AnnoAspect.class})
-public class AutoConfiguration {
+public class AnnoAutoConfiguration {
 }
