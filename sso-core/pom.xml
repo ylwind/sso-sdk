@@ -9,6 +9,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
+    <groupId>site.ripic.sso</groupId>
     <description>sso鉴权核心服务</description>
     <artifactId>sso-core</artifactId>
     <version>1.0-SNAPSHOT</version>
