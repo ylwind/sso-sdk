@@ -52,7 +52,14 @@ public class LogicStrategy {
         this.threadLocal.set(threadLocal);
     }
 
-    private void validToken(String token) {
+
+    /**
+     * 验证token
+     *
+     * @param token token
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    private void validToken(String token) throws InvalidTokenException {
         if (StringUtils.isEmpty(token)) {
             throw new InvalidTokenException("token is invalid");
         }
@@ -70,8 +77,9 @@ public class LogicStrategy {
      * 获取当前会话下的可信tokenInfo
      *
      * @return LoginModel，如果不可信或无效则抛出异常
+     * @throws InvalidTokenException token无效则抛出异常
      */
-    public LoginModel getTokenInfo() {
+    public LoginModel getTokenInfo() throws InvalidTokenException {
         // 获取当前登录的tokenId
         String token = getToken();
         TokenService tokenService = SsoManager.getTokenService();
@@ -84,11 +92,17 @@ public class LogicStrategy {
      * 获取当前会话下的userid
      *
      * @return userid，如果不可信或为空则抛出异常
+     * @throws InvalidTokenException token无效则抛出异常
      */
-    public Long getUserid() {
+    public Long getUserid() throws InvalidTokenException {
         return getTokenInfo().getUserid();
     }
 
+    /**
+     * 判断是否登录
+     *
+     * @return 如果登录则返回true，否则返回false；此方法不会抛出异常
+     */
     public boolean isLogin() {
         try {
             return getUserid() != null;
@@ -97,12 +111,23 @@ public class LogicStrategy {
         }
     }
 
+    /**
+     * 获取的token过期时间
+     *
+     * @return token过期时间，单位秒，不存在则返回0
+     */
     public Long getTokenTimeOut(Long tokenId) {
         TokenStorage tokenStorage = SsoManager.getTokenStorage();
         return tokenStorage.getTtl(tokenId);
     }
 
-    public Long getTokenTimeOut() {
+    /**
+     * 获取当前会话的token过期时间
+     *
+     * @return token过期时间，单位秒，不存在则返回0
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public Long getTokenTimeOut() throws InvalidTokenException {
         return getTokenTimeOut(getTokenInfo().getTokenId());
     }
 
@@ -161,6 +186,12 @@ public class LogicStrategy {
         tokenStorage.removeAllTokenByUserid(userid);
     }
 
+    /**
+     * 加载全局配置
+     * 填充默认超时时间、填充tokenid
+     *
+     * @param loginModel loginModel
+     */
     private void loadGlobalConfig(LoginModel loginModel) {
         // 读取全局配置
         if (loginModel == null) {
@@ -174,6 +205,13 @@ public class LogicStrategy {
         }
     }
 
+    /**
+     * 检查用户状态
+     * 如果检查失败，会发送登录失败通知
+     *
+     * @param userid     userid
+     * @param loginModel 登录实体
+     */
     private void checkUserStatus(long userid, LoginModel loginModel) {
         AccessInterface access = SsoManager.getAccessInterface();
         if (access.isUserDisabled(userid)) {
@@ -191,107 +229,227 @@ public class LogicStrategy {
     }
 
     // -- 权限相关
+
+    /**
+     * 获取用户权限
+     *
+     * @param userid userid
+     * @return 用户权限列表
+     */
     public List<String> getUserPermissionList(long userid) {
         return SsoManager.getAccessInterface().getUserPermissionList(userid);
     }
 
+    /**
+     * 获取用户角色
+     *
+     * @param userid userid
+     * @return 权限列表
+     */
     public List<String> getUserRoleList(long userid) {
         return SsoManager.getAccessInterface().getUserRoleList(userid);
     }
 
-    public List<String> getUserPermissionList() {
+    /**
+     * 获取当前用户权限
+     *
+     * @return 权限列表
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public List<String> getUserPermissionList() throws InvalidTokenException {
         try {
-            return SsoManager.getAccessInterface().getUserPermissionList(this.getUserid());
+            return this.getUserPermissionList(this.getUserid());
         } catch (InvalidTokenException e) {
             return Collections.emptyList();
         }
     }
 
-    public List<String> getUserRoleList() {
+    /**
+     * 获取当前用户角色
+     *
+     * @return 角色列表
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public List<String> getUserRoleList() throws InvalidTokenException {
         try {
-            return SsoManager.getAccessInterface().getUserRoleList(this.getUserid());
+            return this.getUserRoleList(this.getUserid());
         } catch (InvalidTokenException e) {
             return Collections.emptyList();
         }
     }
 
+    /**
+     * 判断用户是否拥有权限
+     *
+     * @param permission 权限
+     * @param userid     userid
+     * @return true or false
+     */
     public boolean hasPermission(String permission, long userid) {
         return getUserPermissionList(userid).contains(permission);
     }
 
-    public boolean hasPermission(String permission) {
-        return getUserPermissionList().contains(permission);
+    /**
+     * 判断用户是否拥有权限
+     *
+     * @param permission 权限
+     * @return true or false
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public boolean hasPermission(String permission) throws InvalidTokenException {
+        return hasPermission(permission, this.getUserid());
     }
 
+    /**
+     * 判断用户是否拥有角色
+     *
+     * @param role   角色
+     * @param userid userid
+     * @return true or false
+     */
     public boolean hasRole(String role, long userid) {
-        return getUserRoleList(userid).contains(role);
+        return this.getUserRoleList(userid).contains(role);
     }
 
-    public boolean hasRole(String role) {
-        return getUserRoleList().contains(role);
+    /**
+     * 判断当前会话用户是否拥有角色
+     *
+     * @param role 角色
+     * @return true or false
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public boolean hasRole(String role) throws InvalidTokenException {
+        return this.hasRole(role, this.getUserid());
     }
 
+    /**
+     * 判断用户是否拥有所有权限
+     *
+     * @param permissionList 权限列表
+     * @param userid         userid
+     * @return true or false
+     */
     public boolean hasAllPermission(List<String> permissionList, long userid) {
+        if (permissionList == null || permissionList.isEmpty()) {
+            return true;
+        }
         return new HashSet<>(getUserPermissionList(userid)).containsAll(permissionList);
     }
 
-    public boolean hasAllPermission(List<String> permissionList) {
-        return new HashSet<>(getUserPermissionList()).containsAll(permissionList);
+    /**
+     * 判断当前会话用户是否拥有所有权限
+     *
+     * @param permissionList 权限列表
+     * @return true or false
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public boolean hasAllPermission(List<String> permissionList) throws InvalidTokenException {
+        return this.hasAllPermission(permissionList, this.getUserid());
     }
 
+    /**
+     * 判断用户是否拥有所有角色
+     *
+     * @param roleList 角色列表
+     * @param userid   userid
+     * @return true or false
+     */
     public boolean hasAllRole(List<String> roleList, long userid) {
+        if (roleList == null || roleList.isEmpty()) {
+            return true;
+        }
         return new HashSet<>(getUserRoleList(userid)).containsAll(roleList);
     }
 
-    public boolean hasAllRole(List<String> roleList) {
-        return new HashSet<>(getUserRoleList()).containsAll(roleList);
+    /**
+     * 判断当前会话用户是否拥有所有角色
+     *
+     * @param roleList 角色列表
+     * @return true or false
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public boolean hasAllRole(List<String> roleList) throws InvalidTokenException {
+        return this.hasAllRole(roleList, this.getUserid());
     }
 
+    /**
+     * 判断用户是否拥有任意权限
+     *
+     * @param permissionList 权限列表
+     * @param userid         userid
+     * @return true or false
+     */
     public boolean hasAnyPermission(List<String> permissionList, long userid) {
+        if (permissionList == null || permissionList.isEmpty()) {
+            return true;
+        }
         return new HashSet<>(getUserPermissionList(userid)).stream().anyMatch(permissionList::contains);
     }
 
-    public boolean hasAnyPermission(List<String> permissionList) {
-        return new HashSet<>(getUserPermissionList()).stream().anyMatch(permissionList::contains);
+    /**
+     * 判断当前会话用户是否拥有任意权限
+     *
+     * @param permissionList 权限列表
+     * @return true or false
+     */
+    public boolean hasAnyPermission(List<String> permissionList) throws InvalidTokenException {
+        return hasAnyPermission(permissionList, this.getUserid());
     }
 
+    /**
+     * 判断用户是否拥有任意角色
+     *
+     * @param roleList 角色列表
+     * @param userid   userid
+     * @return true or false
+     */
     public boolean hasAnyRole(List<String> roleList, long userid) {
+        if (roleList == null || roleList.isEmpty()) {
+            return true;
+        }
         return new HashSet<>(getUserRoleList(userid)).stream().anyMatch(roleList::contains);
     }
 
-    public boolean hasAnyRole(List<String> roleList) {
-        return new HashSet<>(getUserRoleList()).stream().anyMatch(roleList::contains);
+    /**
+     * 判断当前会话用户是否拥有任意角色
+     *
+     * @param roleList 角色列表
+     * @return true or false
+     * @throws InvalidTokenException token无效则抛出异常
+     */
+    public boolean hasAnyRole(List<String> roleList) throws InvalidTokenException {
+        return hasAnyRole(roleList, this.getUserid());
     }
 
-    public boolean hasAllPermission(String... permissionList) {
+    public boolean hasAllPermission(String... permissionList) throws InvalidTokenException {
         return hasAllPermission(Arrays.asList(permissionList));
     }
 
-    public boolean hasAllRole(String... roleList) {
+    public boolean hasAllRole(String... roleList) throws InvalidTokenException {
         return hasAllRole(Arrays.asList(roleList));
     }
 
-    public boolean hasAnyPermission(String... permissionList) {
+    public boolean hasAnyPermission(String... permissionList) throws InvalidTokenException {
         return hasAnyPermission(Arrays.asList(permissionList));
     }
 
-    public boolean hasAnyRole(String... roleList) {
+    public boolean hasAnyRole(String... roleList) throws InvalidTokenException {
         return hasAnyRole(Arrays.asList(roleList));
     }
 
-    public boolean hasAllPermission(long userid, String... permissionList) {
+    public boolean hasAllPermission(long userid, String... permissionList) throws InvalidTokenException {
         return hasAllPermission(Arrays.asList(permissionList), userid);
     }
 
-    public boolean hasAllRole(long userid, String... roleList) {
+    public boolean hasAllRole(long userid, String... roleList) throws InvalidTokenException {
         return hasAllRole(Arrays.asList(roleList), userid);
     }
 
-    public boolean hasAnyPermission(long userid, String... permissionList) {
+    public boolean hasAnyPermission(long userid, String... permissionList) throws InvalidTokenException {
         return hasAnyPermission(Arrays.asList(permissionList), userid);
     }
 
-    public boolean hasAnyRole(long userid, String... roleList) {
+    public boolean hasAnyRole(long userid, String... roleList) throws InvalidTokenException {
         return hasAnyRole(Arrays.asList(roleList), userid);
     }
 }
