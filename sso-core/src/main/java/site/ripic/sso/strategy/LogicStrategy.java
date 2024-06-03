@@ -11,10 +11,7 @@ import site.ripic.sso.model.LoginModel;
 import site.ripic.sso.storage.TokenStorage;
 import site.ripic.sso.token.TokenService;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * 逻辑类策略相关
@@ -151,7 +148,7 @@ public class LogicStrategy {
      */
     public void logout() {
         LoginModel tokenInfo = this.getTokenInfo();
-        logout(List.of(tokenInfo.getTokenId()));
+        logout(Collections.singletonList(tokenInfo.getTokenId()));
     }
 
     /**

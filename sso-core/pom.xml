@@ -6,7 +6,7 @@
     <parent>
         <groupId>site.ripic</groupId>
         <artifactId>sso</artifactId>
-        <version>0.0.1.2-beta</version>
+        <version>0.0.1.3-snapshot</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -15,7 +15,7 @@
     <groupId>site.ripic.sso</groupId>
     <description>sso鉴权核心服务</description>
     <artifactId>sso-core</artifactId>
-    <version>0.0.1.2-beta</version>
+    <version>0.0.1.3-snapshot</version>
     <packaging>jar</packaging>
     <developers>
         <developer>
@@ -51,8 +51,8 @@
         <tag>HEAD</tag>
     </scm>
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -120,9 +120,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
-                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
